@@ -1,0 +1,10 @@
+1                                                f
+2                                                number_of_layers
+7.27415757314481q0, 5.099122256638764q0          xv
+2.0q0, 3.0q0                                     ab
+(1q0, 0q0) (1.3q0, 0.0q0) (1.6q0, 0.0q0)         ri
+3.1415                                           lambda
+30                                               alpha (degrees)
+0                                                lnum, if =0 then value 2PIa/lambda is used
+0                                                minm
+2                                                maxm
