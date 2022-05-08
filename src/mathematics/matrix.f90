@@ -121,9 +121,9 @@ contains
 !            write(*,*)
         enddo
 
-        v1 = cmplx(1.65q36, 20q0, knd)
-        v2 = 1q0 / v1
-        write(*,*) v1, v2, v1 * v2
+!        v1 = cmplx(1.65q36, 20q0, knd)
+!        v2 = 1q0 / v1
+!        write(*,*) v1, v2, v1 * v2
 
     end subroutine LU_gaussian
 

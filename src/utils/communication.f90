@@ -106,10 +106,8 @@ module communication
         !  and whether tmatrices or solution need to be returned
         type(ModeQuery) :: query_te
         type(ModeQuery) :: query_spherical_te
-        type(ModeQuery) :: query_spherical_orthogonal_te
         type(ModeQuery) :: query_tm
         type(ModeQuery) :: query_spherical_tm
-        type(ModeQuery) :: query_spherical_orthogonal_tm
         !  should the scattering indicatrix cut be calculated
         !  if set true then the values uv_te, uv_tm
         !  are ignored and assumed to be = .true.
@@ -131,10 +129,8 @@ module communication
     type, public :: ScatteringResult
         type(ModeResult) :: result_te
         type(ModeResult) :: result_spherical_te
-        type(ModeResult) :: result_spherical_orthogonal_te
         type(ModeResult) :: result_tm
         type(ModeResult) :: result_spherical_tm
-        type(ModeResult) :: result_spherical_orthogonal_tm
         !  [1:4][1:4][1:size(query.indicatrix_points)]
         real(knd), allocatable, dimension(:,:,:) :: indicatrix
         !  is true if the internal checks passed an accuracy threshold
@@ -480,11 +476,7 @@ contains
         if (present(double_for_spherical)) then
             if (double_for_spherical) then
                 call this%query_spherical_te%set(uv_te, pq_te, return_tmatrix, return_tmatrix, return_solution, return_solution)
-                call this%query_spherical_orthogonal_te%set(uv_te, pq_te, return_tmatrix, return_tmatrix, &
-                        return_solution, return_solution)
                 call this%query_spherical_tm%set(uv_tm, pq_tm, return_tmatrix, return_tmatrix, &
-                        return_solution, return_solution)
-                call this%query_spherical_orthogonal_tm%set(uv_tm, pq_tm, return_tmatrix, return_tmatrix, &
                         return_solution, return_solution)
             end if
         end if
@@ -521,14 +513,10 @@ contains
         call result%result_te%log(level, fd)
         write(fd,*) 'spherical'
         call result%result_spherical_te%log(level, fd)
-        write(fd,*) 'orthogonal'
-        call result%result_spherical_orthogonal_te%log(level, fd)
         write(fd, *) 'TM:'
         call result%result_tm%log(level, fd)
         write(fd,*) 'spherical'
         call result%result_spherical_tm%log(level, fd)
-        write(fd,*) 'orthogonal'
-        call result%result_spherical_orthogonal_tm%log(level, fd)
         if (level == DETAIL .and. result%query%calculate_scattering_indicatrix .and. allocated(result%indicatrix)) then
             do i = 1, size(result%indicatrix)
                 write(fd, *) result%query%indicatrix_points(i)%theta%in_degrees(), &
@@ -560,14 +548,8 @@ contains
         call result%result_te%set_mode_result(query%query_te, query%matrix_size, query%minm, query%maxm)
         call result%result_spherical_te%set_mode_result(query%query_spherical_te, query%spherical_matrix_size, &
                 query%minm, query%maxm)
-        call result%result_spherical_orthogonal_te%set_mode_result(query%query_spherical_orthogonal_te, &
-                query%spherical_matrix_size, &
-                query%minm, query%maxm)
         call result%result_tm%set_mode_result(query%query_tm, query%matrix_size, query%minm, query%maxm)
         call result%result_spherical_tm%set_mode_result(query%query_spherical_tm, query%spherical_matrix_size, &
-                query%minm, query%maxm)
-        call result%result_spherical_orthogonal_tm%set_mode_result(query%query_spherical_orthogonal_tm, &
-                query%spherical_matrix_size, &
                 query%minm, query%maxm)
 
         if (query%calculate_scattering_indicatrix) then

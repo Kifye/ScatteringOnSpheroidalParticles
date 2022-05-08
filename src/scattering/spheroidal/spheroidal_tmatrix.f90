@@ -107,21 +107,13 @@ contains
                     if (abs(P(n,l)) < 1q-60) then
                         P(n,l) = 0q0
                     end if
-!                    if (abs(P(n,l) * layers(1,j)%r1(n) / layers(0,j + 1)%r1(l)) > 1000q0) then
-!                    write(*,*) 'n = ', n, 'l = ', l, 'old_val = ', P(n,l), 'up = ', &
-!                            layers(1,j)%r1(n), 'down = ', layers(0,j + 1)%r1(l), 'res = ',&
-!                            P(n,l) * layers(1,j)%r1(n) / layers(0,j + 1)%r1(l)
-!
-!                        end if
-!                    P(n,l) = P(n,l) * layers(1,j)%r1(n) / layers(0,j + 1)%r1(l)
+                    P(n,l) = P(n,l) * layers(1,j)%r1(n) / layers(0,j + 1)%r1(l)
                 end do
             end do
-!            write(*,*) 'pend = ', P(:, matrix_size - 1)
 
             tmp(matrix_size + 1: 2*matrix_size, 1:matrix_size) = get_part(scatterer%spheroidal_type, scatterer%ksi(j), &
                     mu(j - 1:j), R11, R12, W1, P, &
                     Delta(:,:,j), matrix_size)
-!            write(*,*) 'tmp11'
             tmp(1:matrix_size, 1:matrix_size) = -get_part(scatterer%spheroidal_type, scatterer%ksi(j), &
                     mu(j - 1:j), R31, R12, W1, P, &
                     Delta(:,:,j), matrix_size)
@@ -132,7 +124,7 @@ contains
                     P(n,l) = P(n,l) * layers(1,j)%r3(n) / layers(0,j + 1)%r3(l)
                 end do
             end do
-!            write(*,*) 'pend60 = ', P(:,60)
+
             tmp(matrix_size + 1: 2*matrix_size, matrix_size+1:2*matrix_size) = get_part(scatterer%spheroidal_type, &
                     scatterer%ksi(j), &
                     mu(j - 1:j), R11, R32, W1, P, &
@@ -447,10 +439,6 @@ contains
         A31inv = 0
         A31 = big_matr(1:2*matrix_size, :)
         A11 = big_matr(2*matrix_size + 1:4*matrix_size, :)
-!                    write(*,*) 'A11 = '
-!                    do i = 1, 2 * matrix_size
-!                        write(*,*) A11(i,:)
-!                    end do
 
         initial_corrector(1:matrix_size) = 1q0 / (layers(0, 1)%r1(1:matrix_size) * k1)
         initial_corrector((matrix_size + 1):(2 * matrix_size)) = 1q0 / (layers(0, 1)%r1(1:matrix_size) * c1)

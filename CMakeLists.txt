@@ -34,8 +34,11 @@ SET(SOURCES_SCATTERING
         src/scattering/spheroidal/spheroidal_tmatrix.f90
         src/scattering/spheroidal/spheroidal_scattering.f90
         src/scattering/spheroidal/spheroidal_indicatrix.f90)
-SET(SOURCES_ALL ${SOURCES_PARAMETERS} ${SOURCES_UTILS} ${SOURCES_MATH} ${SOURCES_SPHEROIDAL_FUNCTIONS} ${SOURCES_SPHERICAL} ${SOURCES_SCATTERING})
+SET(SOURCES_ALL
+        ${SOURCES_PARAMETERS} ${SOURCES_UTILS} ${SOURCES_MATH} ${SOURCES_SPHEROIDAL_FUNCTIONS}
+        ${SOURCES_SPHERICAL} ${SOURCES_SCATTERING} src/scattering_functions.f90)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
-add_executable(ScatteringOnSpheroids main.f90 src/scattering_functions.f90 ${SOURCES_ALL})
-add_executable(test_c_of_n testing/test_c_of_n.f90 src/scattering_functions.f90 ${SOURCES_ALL})
+add_executable(ScatteringOnSpheroids main.f90 ${SOURCES_ALL})
+add_executable(test_c_of_n testing/test_c_of_n.f90 ${SOURCES_ALL})
+add_executable(test_barber_tmatrix testing/test_barber_tmatrix.f90 ${SOURCES_ALL})

@@ -31,10 +31,10 @@ contains
         call legendre%calculate()
         do i = 1, nsize
             do j = 1, lsize
-!                res(i, j) = cmplx(0q0, 1q0, knd) ** (j - i) * layer%legendre(j - 1, i)
                 res(i, j) = cmplx(0q0, 1q0, knd) ** (j - i) * layer%legendre(j - 1, i) * sqrt(1q0 / legendre%coef(j))
             end do
         end do
+!        call log_matrix(FILE_DESCRIPTOR(WARNING), 'connecting', res, .false., nsize)
 
     end subroutine set_connecting_matrix
 
@@ -79,8 +79,6 @@ contains
         integer :: n
 
         spherical_tmatrix = matmul(transpose(connecting_matrix), matmul(spheroidal_tmatrix, connecting_matrix))
-        call multiply_by_diag_right(spherical_tmatrix, spherical_size, cmplx(1q0, 0q0) * sqrt(legendre%coef))
-        call multiply_by_diag_left(spherical_tmatrix, spherical_size, cmplx(1q0, 0q0) / sqrt(legendre%coef))
 
     end subroutine set_spherical_tmatrix
 
@@ -288,21 +286,98 @@ contains
 
     end function get_nonaxisymmetric_spherical_scattering
 
-    subroutine set_spherical_orth_tmatrix(nonorth_tmatrix, matrix_size, orth_tmatrix)
-        integer :: matrix_size, n, l
-        complex(knd) :: nonorth_tmatrix(2 * matrix_size, 2 * matrix_size), f(matrix_size, matrix_size), &
-                orth_tmatrix(2 * matrix_size, 2 * matrix_size), rev(matrix_size, matrix_size)
-        do n = 1, matrix_size
-            do l = 1, matrix_size
-                f(n, l) = (kroneker(n+1, l) + kroneker(n-1, l)) / sqrt((2 * n + 1q0)*(2q0*l+1q0))
+    subroutine set_spherical_orth_tmatrix(spherical_tmatrix, m, res, legendre, k)
+        integer :: m, i, j
+        complex(knd) :: spherical_tmatrix(2 * m, 2 * m),  res(2 * m, 2 * m)
+
+        real(knd) :: k
+        type(LegendreCalculation), intent(in) :: legendre
+
+        complex(knd) :: f(m, m), orth(m, m), revf(m, m), f0(m, m), tmp0(m, m), xd(m,m), xdrev(m,m), g(m,m), grev(m,m)
+
+
+        f = 0
+        g = 0
+        grev = 0
+        if (legendre%m == 0) then
+            do i = 0, m-1
+                if (i > 0) then
+                    f(i + 1,i) = 1q0 / sqrt((2q0 * i + 1) * (2q0 * i - 1))
+                end if
+                if (i < m - 1) then
+                    ! m = 0
+                    f(i + 1, i + 2) = 1q0 / sqrt((2q0 * i + 1) * (2q0 * i + 3))
+                end if
             end do
-        end do
+        else
+            do i = legendre%m, legendre%m + m - 1
+                if (i > legendre%m) then
+                    ! m > 0
+                    f(i - legendre%m + 1, i - legendre%m) = sqrt(((i + legendre%m) * (i - legendre%m)) / &
+                            (i ** 2 * (2q0 * i + 1) * (2q0 * i - 1)))
+                end if
+                if (i - legendre%m + 1 < m) then
+                    ! m > 0
+                    f(i - legendre%m + 1, i - legendre%m + 2) = sqrt(((i - legendre%m + 1q0) * (i + legendre%m + 1q0)) / &
+                            ((2q0 * i + 1) * (2q0 * i + 3) * (i + 1) ** 2))
+                end if
+                ! 1/g1
+                grev(i - legendre%m + 1,i - legendre%m + 1) = i * (i + 1q0) / legendre%m
+                g(i - legendre%m + 1,i - legendre%m + 1) = legendre%m / (i + 1q0) / i
+            end do
+        end if
+        !        call log_matrix(FILE_DESCRIPTOR(WARNING), 'f', f, .false., m)
+        call inverse_matrix(f, m, f0, .true.)
+        !        call log_matrix(FILE_DESCRIPTOR(WARNING), 'f0', f0, .false., m)
+        !        call log_matrix(FILE_DESCRIPTOR(WARNING), 'f*f0', matmul(f, f0), .false., m)
+        xd = 0
+        xdrev = 0
+        if (legendre%m == 0) then
+            do i = 1, m-1
+                ! for m = 0
+                xd(i + 1, i + 1) = sqrt(2q0 / (2q0 * i + 1)) * (2q0 * i + 1) / (4 * i * (i + 1))
+                xdrev(i + 1, i + 1) = 1q0 / (sqrt(2q0 / (2q0 * i + 1)) * (2q0 * i + 1) / (4 * i * (i + 1)))
+            end do
+        else
+            do i = legendre%m, legendre%m + m - 1
+                ! for m = 1
+                !                xd(i, i) = sqrt(2q0 / (2q0 * i + 1) * (i + 1) * i) * (2q0 * i + 1) / (2 * (i * (i + 1))**2)
+                xd(i - legendre%m + 1, i - legendre%m + 1) = 1q0 / i / (i + 1q0) * sqrt(legendre%coef(i - legendre%m + 1))
+                !                xdrev(i, i) = 1q0 / (sqrt(2q0 / (2q0 * i + 1) * (i + 1) * i) * (2q0 * i + 1) / (2 * (i * (i + 1))**2))
+                xdrev(i - legendre%m + 1, i - legendre%m + 1) = i * (i + 1q0) / sqrt(legendre%coef(i - legendre%m + 1))
+            end do
+        end if
+        !        do i = 1, m
+        !            write(*,*) 'coef =', (2q0 * i + 1) / (2 * (i * (i + 1))**2)
+        !        end do
+        ! for m = 0
+        !        orth = matmul(spherical_tmatrix((m + 1):(2*m), 1:m) / k + matmul(f, spherical_tmatrix(1:m, 1:m)), f0)
+        ! for m > 0
 
-        call inverse_matrix(f, matrix_size, rev)
+        ! for T_VV^{11}
+        orth = spherical_tmatrix((m + 1):(2*m), (m + 1):(2*m)) + k * matmul(f, spherical_tmatrix(1:m, (m + 1):(2*m)))
+        orth = matmul(xdrev, matmul(orth, xd))
+        res(1:m,1:m) = orth
+        ! for T_VV^{12}
+        orth = spherical_tmatrix((m + 1):(2*m), (m + 1):(2*m)) + k * matmul(f, spherical_tmatrix(1:m, (m + 1):(2*m)))
+        orth = matmul(orth, f)
+        orth = matmul(f, spherical_tmatrix(1:m,1:m)) + spherical_tmatrix((m + 1):(2*m), 1:m) - orth
+        orth = matmul(orth, grev)
+        orth = matmul(xdrev, matmul(orth, xd))
+        res(1:m,(m+1):(2*m)) = orth
 
-        orth_tmatrix=0
-        orth_tmatrix = matmul(matmul(f, nonorth_tmatrix(1:matrix_size, 1:matrix_size)) + &
-                nonorth_tmatrix(matrix_size + 1:matrix_size, 1:matrix_size), rev)
+        ! for T_{VV}^{21}
+        orth = k * matmul(g, spherical_tmatrix(1:m, (m + 1):(2*m)))
+        orth = matmul(xdrev, matmul(orth, xd))
+        res((m+1):(2*m), 1:m) = orth
+
+        ! for T_{VV}^{22}
+        orth = spherical_tmatrix(1:m, 1:m) - k * matmul(spherical_tmatrix(1:m, (m + 1):(2 * m)), f)
+        orth = matmul(g, matmul(orth, grev))
+        orth = matmul(xdrev, matmul(orth, xd))
+        res((m+1):(2*m), (m+1):(2*m)) = orth
+
+!        call log_matrix(FILE_DESCRIPTOR(WARNING), 'TUVBAR', orth, .false., m)
 
     end subroutine set_spherical_orth_tmatrix
 

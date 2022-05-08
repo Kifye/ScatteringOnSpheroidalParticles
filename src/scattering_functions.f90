@@ -98,6 +98,38 @@ contains
 
     end function GetSpheroidalQFactors
 
+    type(ScatteringResult) function GetSphericalTmatrix(f, number_of_layers, xv, ab, alpha, lambda, ri, matrix_size, minm, maxm)
+        integer, intent(in) :: f, number_of_layers
+        real(knd), intent(in) :: xv(number_of_layers), ab(number_of_layers), alpha, lambda
+        complex(knd), intent(in) :: ri(0:number_of_layers)
+        integer, intent(in) :: matrix_size
+        integer, optional, intent(in) :: minm, maxm
+
+        type(SpheroidalScatterer) :: scatterer
+        type(WavelengthPoint) :: point
+        type(ScatteringQuery) :: query
+        type(ScatteringResult) :: result
+        integer :: max_border, min_border
+
+        min_border = 0
+        max_border = get_max_m(f, xv(1), ab(1))
+        if (present(minm)) then
+            min_border = minm
+        end if
+        if (present(maxm)) then
+            max_border = maxm
+        end if
+
+        call scatterer%set(f, xv, ab, alpha, number_of_layers)
+        query = create_query(matrix_size, &
+                min_border, max_border, &
+                BASE_ACCURACY, &
+                uv_te = .true., uv_tm = .true., return_tmatrix = .true., double_for_spherical = .true.)
+        call point%initialize(lambda, number_of_layers, ri)
+        GetSphericalTmatrix = calculate_scattering(scatterer, point, query)
+
+    end function GetSphericalTmatrix
+
     subroutine print_indicatrix(f, xv, ab, alpha, lambda, ri, minm, maxm, &
             ntheta, theta_begin, theta_end, nphi, phi_begin, phi_end, fd)
         integer, intent(in) :: f, minm, maxm, ntheta, nphi, fd

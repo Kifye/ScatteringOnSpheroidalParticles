@@ -258,16 +258,6 @@ contains
                 result%result_spherical_te%pq_factors%sca = result%result_spherical_te%pq_factors%sca + &
                         get_axisymmetric_spherical_scattering(legendre, calculation_point, &
                                 spherical_matrix_size, spherical_solution)
-                call calculate_axisymmetric_spherical_orthogonal_initial_te(legendre0, &
-                        calculation_point, scatterer,&
-                        spherical_matrix_size, spherical_initial)
-                spherical_solution = matmul(spherical_tmatrix, spherical_initial)
-                result%result_spherical_orthogonal_te%pq_factors%ext = result%result_spherical_orthogonal_te%pq_factors%ext + &
-                        get_axisymmetric_spherical_extinction(legendre0, calculation_point, scatterer, &
-                                spherical_matrix_size, spherical_solution)
-                result%result_spherical_orthogonal_te%pq_factors%sca = result%result_spherical_orthogonal_te%pq_factors%sca + &
-                        get_axisymmetric_spherical_scattering(legendre0, calculation_point, &
-                                spherical_matrix_size, spherical_solution)
             end if
         end if
         if (query%query_tm%calculate_pq_factors) then
@@ -362,6 +352,7 @@ contains
                 call set_connecting_matrix(layers(0, 1), matrix_size, spherical_matrix_size, connecting_matrix)
                 call set_nonaxisymmetric_spherical_tmatrix(matrix_size, tmatrix, &
                         spherical_matrix_size, spherical_tmatrix, connecting_matrix, legendre)
+!                call log_matrix(FILE_DESCRIPTOR(WARNING), 'T_UV_spherical', tmatrix, .false., 2 * matrix_size)
                 call calculate_nonaxisymmetric_spherical_initial_te(legendre, calculation_point, scatterer, &
                         spherical_matrix_size, spherical_initial)
                 spherical_solution = matmul(spherical_tmatrix, spherical_initial)
@@ -376,14 +367,11 @@ contains
                         get_nonaxisymmetric_spherical_scattering(legendre, calculation_point, scatterer, &
                                 spherical_matrix_size, spherical_solution)
 
-                call set_spherical_orth_tmatrix(spherical_tmatrix, matrix_size, orth_tmatrix)
-                spherical_solution = matmul(spherical_tmatrix, spherical_initial)
-                result%result_spherical_orthogonal_te%uv_factors%ext = result%result_spherical_orthogonal_te%uv_factors%ext + &
-                        get_nonaxisymmetric_spherical_extinction(legendre, calculation_point, scatterer, &
-                                spherical_matrix_size, spherical_solution)
-                result%result_spherical_orthogonal_te%uv_factors%sca = result%result_spherical_orthogonal_te%uv_factors%sca + &
-                        get_nonaxisymmetric_spherical_scattering(legendre, calculation_point, scatterer, &
-                                spherical_matrix_size, spherical_solution)
+                if (query%query_spherical_te%return_uv_tmatrix) then
+                    call set_spherical_orth_tmatrix(spherical_tmatrix, matrix_size, orth_tmatrix, legendre, calculation_point%k)
+                    result%result_spherical_te%uv_tmatrix(:,:,m) = orth_tmatrix
+                end if
+
             end if
         end if
 
@@ -394,6 +382,7 @@ contains
             solution_tm = 0
             call calculate_nonaxisymmetric_tmatrix(scatterer, calculation_point, layers, &
                     matrix_size, query%accuracy, .false., tmatrix, Delta, Q01, Q11, Q01Q11, Kappa, Gamma11, Epsilon)
+!            call log_matrix(FILE_DESCRIPTOR(WARNING), 'T_UV_spheroidal', tmatrix, .false., 2 * matrix_size)
             call set_nonaxisymmetric_solution(scatterer, calculation_point, layers(0, 1), layers(1, 1), &
                     matrix_size, query%accuracy, .false., initial, tmatrix, solution_tm, 1)
 
@@ -415,6 +404,7 @@ contains
                 call set_connecting_matrix(layers(0, 1), matrix_size, spherical_matrix_size, connecting_matrix)
                 call set_nonaxisymmetric_spherical_tmatrix(matrix_size, tmatrix, &
                         spherical_matrix_size, spherical_tmatrix, connecting_matrix, legendre)
+!                call log_matrix(FILE_DESCRIPTOR(WARNING), 'T_UV_spherical', spherical_tmatrix, .false., 2 * matrix_size)
                 call calculate_nonaxisymmetric_spherical_initial_tm(legendre, calculation_point, scatterer, &
                         spherical_matrix_size, spherical_initial)
                 spherical_solution = matmul(spherical_tmatrix, spherical_initial)
@@ -425,14 +415,10 @@ contains
                         get_nonaxisymmetric_spherical_scattering(legendre, calculation_point, scatterer, &
                                 spherical_matrix_size, spherical_solution)
 
-                call set_spherical_orth_tmatrix(spherical_tmatrix, matrix_size, orth_tmatrix)
-                spherical_solution = matmul(spherical_tmatrix, spherical_initial)
-                result%result_spherical_orthogonal_tm%uv_factors%ext = result%result_spherical_orthogonal_tm%uv_factors%ext + &
-                        get_nonaxisymmetric_spherical_extinction(legendre, calculation_point, scatterer, &
-                                spherical_matrix_size, spherical_solution)
-                result%result_spherical_orthogonal_tm%uv_factors%sca = result%result_spherical_orthogonal_tm%uv_factors%sca + &
-                        get_nonaxisymmetric_spherical_scattering(legendre, calculation_point, scatterer, &
-                                spherical_matrix_size, spherical_solution)
+                if (query%query_spherical_tm%return_uv_tmatrix) then
+                    call set_spherical_orth_tmatrix(spherical_tmatrix, matrix_size, orth_tmatrix, legendre, calculation_point%k)
+                    result%result_spherical_tm%uv_tmatrix(:,:,m) = orth_tmatrix
+                end if
             end if
         end if
     end function calculate_nonsymmetric_qfactors
