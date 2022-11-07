@@ -47,7 +47,7 @@ contains
         complex(knd) :: tmp1(matrix_size, matrix_size), tmp2(matrix_size, matrix_size), value
         integer :: n, l, s, maxd, lnum
         lnum = min(first%maxd, second%maxd)
-        call leg%set(first%m, first%m + lnum + 1, 1q0)
+        call leg%set(first%m, first%m + lnum + 1, 1.0_knd)
         call leg%calculate()
         P = 0
         do n = 1, matrix_size
